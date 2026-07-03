@@ -1,0 +1,76 @@
+# Infrastructure: PostgreSQL + Redis with persistent volumes.
+#
+# First-time setup:
+#   ./scripts/setup-env.sh
+#   docker compose -f docker-compose.infra.yml up -d
+#
+# Stop:
+#   docker compose -f docker-compose.infra.yml down
+#
+# Reset data (destructive):
+#   docker compose -f docker-compose.infra.yml down -v
+
+name: tvtime2serializd
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD}
+      - --appendonly
+      - "yes"
+      - --save
+      - "60"
+      - "1"
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+volumes:
+  postgres_data:
+    name: tvtime2serializd_postgres_data
+  redis_data:
+    name: tvtime2serializd_redis_data
+
+networks:
+  internal:
+    name: tvtime2serializd_internal
