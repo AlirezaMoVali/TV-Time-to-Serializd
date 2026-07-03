@@ -1,0 +1,9 @@
+graphify-out/
+bin/
+.git/
+.env
+*.md
+tvtime-login.py
+Untitled-*
+dumps/
+scripts/
