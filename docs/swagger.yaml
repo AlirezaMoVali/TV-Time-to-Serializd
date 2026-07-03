@@ -1,0 +1,656 @@
+basePath: /
+definitions:
+  github_com_alireza_tvtime2serializd_internal_service.CheckExistingStep:
+    properties:
+      done:
+        type: integer
+      remaining:
+        type: integer
+      skipped:
+        items:
+          $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.ShowRef'
+        type: array
+      status:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus'
+      total:
+        type: integer
+    type: object
+  github_com_alireza_tvtime2serializd_internal_service.CountStep:
+    properties:
+      done:
+        type: integer
+      message:
+        type: string
+      phase:
+        type: string
+      remaining:
+        type: integer
+      status:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus'
+      total:
+        type: integer
+    type: object
+  github_com_alireza_tvtime2serializd_internal_service.ImportStep:
+    properties:
+      done:
+        type: integer
+      not_found:
+        items:
+          $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.ShowRef'
+        type: array
+      remaining:
+        type: integer
+      status:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus'
+      total:
+        type: integer
+    type: object
+  github_com_alireza_tvtime2serializd_internal_service.LoginStep:
+    properties:
+      message:
+        type: string
+      status:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus'
+    type: object
+  github_com_alireza_tvtime2serializd_internal_service.QueueInfo:
+    properties:
+      ahead:
+        type: integer
+      estimated_wait_seconds:
+        type: integer
+      position:
+        type: integer
+      running_slots_max:
+        type: integer
+      running_slots_used:
+        type: integer
+    type: object
+  github_com_alireza_tvtime2serializd_internal_service.ShowRef:
+    properties:
+      name:
+        type: string
+      tvdb_id:
+        type: integer
+    type: object
+  github_com_alireza_tvtime2serializd_internal_service.StepStatus:
+    enum:
+    - pending
+    - running
+    - done
+    - wrong_credentials
+    - error
+    type: string
+    x-enum-varnames:
+    - StepPending
+    - StepRunning
+    - StepDone
+    - StepWrongCredentials
+    - StepError
+  github_com_alireza_tvtime2serializd_internal_service.SummaryStep:
+    properties:
+      already_in_serializd:
+        type: integer
+      export_id:
+        type: string
+      newly_added:
+        type: integer
+      not_found:
+        type: integer
+      status:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus'
+      total_tvtime:
+        type: integer
+    type: object
+  github_com_alireza_tvtime2serializd_internal_tvtime.ExportEpisode:
+    properties:
+      id:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExternalIDs'
+      is_watched:
+        type: boolean
+      name:
+        type: string
+      number:
+        type: integer
+      rewatch_count:
+        type: integer
+      special:
+        type: boolean
+      watched_at:
+        type: string
+      watched_count:
+        type: integer
+    type: object
+  github_com_alireza_tvtime2serializd_internal_tvtime.ExportSeason:
+    properties:
+      episodes:
+        items:
+          $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExportEpisode'
+        type: array
+      is_specials:
+        type: boolean
+      number:
+        type: integer
+    type: object
+  github_com_alireza_tvtime2serializd_internal_tvtime.ExportShow:
+    properties:
+      _noEpisodeData:
+        type: boolean
+      created_at:
+        type: string
+      id:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExternalIDs'
+      is_favorite:
+        type: boolean
+      seasons:
+        items:
+          $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExportSeason'
+        type: array
+      status:
+        type: string
+      title:
+        type: string
+      uuid:
+        type: string
+      year:
+        type: integer
+    type: object
+  github_com_alireza_tvtime2serializd_internal_tvtime.ExternalIDs:
+    properties:
+      imdb:
+        type: string
+      tvdb:
+        type: integer
+    type: object
+  internal_handler.ErrorResponse:
+    properties:
+      error:
+        example: invalid JSON body
+        type: string
+    type: object
+  internal_handler.ExportCreateRequest:
+    properties:
+      format:
+        enum:
+        - json
+        - csv
+        - both
+        example: json
+        type: string
+      token_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  internal_handler.ExportCreateResponse:
+    properties:
+      format:
+        enum:
+        - json
+        - csv
+        - both
+        example: json
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      status:
+        enum:
+        - running
+        - completed
+        - failed
+        example: running
+        type: string
+    type: object
+  internal_handler.ExportGetResponse:
+    properties:
+      duration_ms:
+        example: 45000
+        type: integer
+      error:
+        type: string
+      format:
+        enum:
+        - json
+        - csv
+        - both
+        example: json
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      show_count:
+        example: 42
+        type: integer
+      shows:
+        items:
+          $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExportShow'
+        type: array
+      status:
+        enum:
+        - running
+        - completed
+        - failed
+        example: completed
+        type: string
+      watched_episodes:
+        example: 1200
+        type: integer
+    type: object
+  internal_handler.HealthResponse:
+    properties:
+      services:
+        additionalProperties:
+          type: string
+        example:
+          postgres: ok
+          redis: ok
+        type: object
+      status:
+        enum:
+        - ok
+        - degraded
+        example: ok
+        type: string
+    type: object
+  internal_handler.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secret
+        type: string
+    type: object
+  internal_handler.LoginResponse:
+    properties:
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  internal_handler.MigrateDumpOptions:
+    properties:
+      enabled:
+        type: boolean
+      format:
+        enum:
+        - json
+        - csv
+        - both
+        example: json
+        type: string
+    type: object
+  internal_handler.MigrateInitRequest:
+    properties:
+      dump:
+        $ref: '#/definitions/internal_handler.MigrateDumpOptions'
+      serializd_email:
+        example: user@example.com
+        type: string
+      serializd_password:
+        example: secret
+        type: string
+      tvtime_email:
+        example: user@example.com
+        type: string
+      tvtime_password:
+        example: secret
+        type: string
+    type: object
+  internal_handler.MigrateInitResponse:
+    properties:
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  internal_handler.MigrateProgressResponse:
+    properties:
+      check_existing:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.CheckExistingStep'
+      current_activity:
+        type: string
+      current_step:
+        type: integer
+      gather_shows:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.CountStep'
+      import_shows:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.ImportStep'
+      job_id:
+        type: string
+      logs:
+        items:
+          type: string
+        type: array
+      queue:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.QueueInfo'
+      serializd_login:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.LoginStep'
+      status:
+        type: string
+      summary:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.SummaryStep'
+      tvtime_login:
+        $ref: '#/definitions/github_com_alireza_tvtime2serializd_internal_service.LoginStep'
+    type: object
+  internal_handler.SerializdLoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secret
+        type: string
+    type: object
+  internal_handler.SerializdLoginResponse:
+    properties:
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: API Support
+  description: REST API for exporting TV Time watch history and migrating shows to
+    Serializd.
+  title: TV Time to Serializd API
+  version: "1.0"
+paths:
+  /health:
+    get:
+      description: Returns API health and dependency status for Postgres and Redis.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.HealthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/internal_handler.HealthResponse'
+      summary: Health check
+      tags:
+      - system
+  /migrate/init:
+    post:
+      consumes:
+      - application/json
+      description: Validates credentials and queues a TV Time → Serializd migration
+        job. Rate limited per client IP.
+      parameters:
+      - description: Migration options
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.MigrateInitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.MigrateInitResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Start migration
+      tags:
+      - migrate
+  /migrate/init/{id}:
+    get:
+      description: Returns live stepped progress for a migration job.
+      parameters:
+      - description: Migration job UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.MigrateProgressResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Get migration progress
+      tags:
+      - migrate
+  /migrate/init/{id}/stream:
+    get:
+      description: Server-Sent Events stream of migration progress. Emits `progress`
+        events with JSON payloads and heartbeat comments until completed or failed.
+      parameters:
+      - description: Migration job UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: SSE stream
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Stream migration progress (SSE)
+      tags:
+      - migrate
+  /serializd/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates with Serializd and stores an encrypted JWT. Rate
+        limited per client IP.
+      parameters:
+      - description: Serializd credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.SerializdLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.SerializdLoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Serializd login
+      tags:
+      - serializd
+  /tvtime/export:
+    post:
+      consumes:
+      - application/json
+      description: Starts an asynchronous export of watched shows from TV Time.
+      parameters:
+      - description: Export options
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.ExportCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.ExportCreateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Start TV Time export
+      tags:
+      - tvtime
+  /tvtime/export/{id}:
+    get:
+      description: Returns export job status. When completed, includes the exported
+        shows JSON payload.
+      parameters:
+      - description: Export job UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.ExportGetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Get export status
+      tags:
+      - tvtime
+  /tvtime/export/{id}/download:
+    get:
+      description: Downloads a completed export as JSON or CSV (Liberator format).
+      parameters:
+      - description: Export job UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Download format
+        enum:
+        - json
+        - csv
+        in: query
+        name: format
+        required: true
+        type: string
+      produces:
+      - application/json
+      - text/csv
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: Download export file
+      tags:
+      - tvtime
+  /tvtime/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates with TV Time and stores an encrypted token. Returns
+        a token UUID for export requests. Rate limited per client IP.
+      parameters:
+      - description: TV Time credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/internal_handler.ErrorResponse'
+      summary: TV Time login
+      tags:
+      - tvtime
+schemes:
+- http
+- https
+swagger: "2.0"
+tags:
+- description: Health and operational endpoints
+  name: system
+- description: TV Time login and export
+  name: tvtime
+- description: Serializd authentication
+  name: serializd
+- description: TV Time to Serializd migration jobs
+  name: migrate

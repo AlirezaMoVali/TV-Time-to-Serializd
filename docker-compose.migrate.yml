@@ -1,0 +1,32 @@
+# Run database migrations (one-shot).
+#
+# Prerequisites: infra must be running.
+#   docker compose -f docker-compose.infra.yml up -d
+#
+# Apply migrations:
+#   docker compose -f docker-compose.infra.yml -f docker-compose.migrate.yml run --rm migrate
+#
+# Roll back one migration:
+#   docker compose -f docker-compose.infra.yml -f docker-compose.migrate.yml run --rm migrate down
+
+name: tvtime2serializd
+
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ["/bin/migrate"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+
+networks:
+  internal:
+    name: tvtime2serializd_internal
