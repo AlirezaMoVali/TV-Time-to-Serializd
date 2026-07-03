@@ -1,0 +1,973 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "REST API for exporting TV Time watch history and migrating shows to Serializd.",
+        "title": "TV Time to Serializd API",
+        "contact": {
+            "name": "API Support"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/health": {
+            "get": {
+                "description": "Returns API health and dependency status for Postgres and Redis.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.HealthResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/migrate/init": {
+            "post": {
+                "description": "Validates credentials and queues a TV Time → Serializd migration job. Rate limited per client IP.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "migrate"
+                ],
+                "summary": "Start migration",
+                "parameters": [
+                    {
+                        "description": "Migration options",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.MigrateInitRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.MigrateInitResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/migrate/init/{id}": {
+            "get": {
+                "description": "Returns live stepped progress for a migration job.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "migrate"
+                ],
+                "summary": "Get migration progress",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Migration job UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.MigrateProgressResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/migrate/init/{id}/stream": {
+            "get": {
+                "description": "Server-Sent Events stream of migration progress. Emits `progress` events with JSON payloads and heartbeat comments until completed or failed.",
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "migrate"
+                ],
+                "summary": "Stream migration progress (SSE)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Migration job UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SSE stream",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/serializd/login": {
+            "post": {
+                "description": "Authenticates with Serializd and stores an encrypted JWT. Rate limited per client IP.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "serializd"
+                ],
+                "summary": "Serializd login",
+                "parameters": [
+                    {
+                        "description": "Serializd credentials",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.SerializdLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.SerializdLoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tvtime/export": {
+            "post": {
+                "description": "Starts an asynchronous export of watched shows from TV Time.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tvtime"
+                ],
+                "summary": "Start TV Time export",
+                "parameters": [
+                    {
+                        "description": "Export options",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ExportCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ExportCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tvtime/export/{id}": {
+            "get": {
+                "description": "Returns export job status. When completed, includes the exported shows JSON payload.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tvtime"
+                ],
+                "summary": "Get export status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Export job UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ExportGetResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tvtime/export/{id}/download": {
+            "get": {
+                "description": "Downloads a completed export as JSON or CSV (Liberator format).",
+                "produces": [
+                    "application/json",
+                    "text/csv"
+                ],
+                "tags": [
+                    "tvtime"
+                ],
+                "summary": "Download export file",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Export job UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "json",
+                            "csv"
+                        ],
+                        "type": "string",
+                        "description": "Download format",
+                        "name": "format",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tvtime/login": {
+            "post": {
+                "description": "Authenticates with TV Time and stores an encrypted token. Returns a token UUID for export requests. Rate limited per client IP.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tvtime"
+                ],
+                "summary": "TV Time login",
+                "parameters": [
+                    {
+                        "description": "TV Time credentials",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_alireza_tvtime2serializd_internal_service.CheckExistingStep": {
+            "type": "object",
+            "properties": {
+                "done": {
+                    "type": "integer"
+                },
+                "remaining": {
+                    "type": "integer"
+                },
+                "skipped": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.ShowRef"
+                    }
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_service.CountStep": {
+            "type": "object",
+            "properties": {
+                "done": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "phase": {
+                    "type": "string"
+                },
+                "remaining": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_service.ImportStep": {
+            "type": "object",
+            "properties": {
+                "done": {
+                    "type": "integer"
+                },
+                "not_found": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.ShowRef"
+                    }
+                },
+                "remaining": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_service.LoginStep": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_service.QueueInfo": {
+            "type": "object",
+            "properties": {
+                "ahead": {
+                    "type": "integer"
+                },
+                "estimated_wait_seconds": {
+                    "type": "integer"
+                },
+                "position": {
+                    "type": "integer"
+                },
+                "running_slots_max": {
+                    "type": "integer"
+                },
+                "running_slots_used": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_service.ShowRef": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "tvdb_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_service.StepStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "running",
+                "done",
+                "wrong_credentials",
+                "error"
+            ],
+            "x-enum-varnames": [
+                "StepPending",
+                "StepRunning",
+                "StepDone",
+                "StepWrongCredentials",
+                "StepError"
+            ]
+        },
+        "github_com_alireza_tvtime2serializd_internal_service.SummaryStep": {
+            "type": "object",
+            "properties": {
+                "already_in_serializd": {
+                    "type": "integer"
+                },
+                "export_id": {
+                    "type": "string"
+                },
+                "newly_added": {
+                    "type": "integer"
+                },
+                "not_found": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.StepStatus"
+                },
+                "total_tvtime": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_tvtime.ExportEpisode": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExternalIDs"
+                },
+                "is_watched": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "rewatch_count": {
+                    "type": "integer"
+                },
+                "special": {
+                    "type": "boolean"
+                },
+                "watched_at": {
+                    "type": "string"
+                },
+                "watched_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_tvtime.ExportSeason": {
+            "type": "object",
+            "properties": {
+                "episodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExportEpisode"
+                    }
+                },
+                "is_specials": {
+                    "type": "boolean"
+                },
+                "number": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_tvtime.ExportShow": {
+            "type": "object",
+            "properties": {
+                "_noEpisodeData": {
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExternalIDs"
+                },
+                "is_favorite": {
+                    "type": "boolean"
+                },
+                "seasons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExportSeason"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "uuid": {
+                    "type": "string"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_alireza_tvtime2serializd_internal_tvtime.ExternalIDs": {
+            "type": "object",
+            "properties": {
+                "imdb": {
+                    "type": "string"
+                },
+                "tvdb": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "invalid JSON body"
+                }
+            }
+        },
+        "internal_handler.ExportCreateRequest": {
+            "type": "object",
+            "properties": {
+                "format": {
+                    "type": "string",
+                    "enum": [
+                        "json",
+                        "csv",
+                        "both"
+                    ],
+                    "example": "json"
+                },
+                "token_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "internal_handler.ExportCreateResponse": {
+            "type": "object",
+            "properties": {
+                "format": {
+                    "type": "string",
+                    "enum": [
+                        "json",
+                        "csv",
+                        "both"
+                    ],
+                    "example": "json"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "running",
+                        "completed",
+                        "failed"
+                    ],
+                    "example": "running"
+                }
+            }
+        },
+        "internal_handler.ExportGetResponse": {
+            "type": "object",
+            "properties": {
+                "duration_ms": {
+                    "type": "integer",
+                    "example": 45000
+                },
+                "error": {
+                    "type": "string"
+                },
+                "format": {
+                    "type": "string",
+                    "enum": [
+                        "json",
+                        "csv",
+                        "both"
+                    ],
+                    "example": "json"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "show_count": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "shows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_tvtime.ExportShow"
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "running",
+                        "completed",
+                        "failed"
+                    ],
+                    "example": "completed"
+                },
+                "watched_episodes": {
+                    "type": "integer",
+                    "example": 1200
+                }
+            }
+        },
+        "internal_handler.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "services": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "postgres": "ok",
+                        "redis": "ok"
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "ok",
+                        "degraded"
+                    ],
+                    "example": "ok"
+                }
+            }
+        },
+        "internal_handler.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secret"
+                }
+            }
+        },
+        "internal_handler.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "internal_handler.MigrateDumpOptions": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "format": {
+                    "type": "string",
+                    "enum": [
+                        "json",
+                        "csv",
+                        "both"
+                    ],
+                    "example": "json"
+                }
+            }
+        },
+        "internal_handler.MigrateInitRequest": {
+            "type": "object",
+            "properties": {
+                "dump": {
+                    "$ref": "#/definitions/internal_handler.MigrateDumpOptions"
+                },
+                "serializd_email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "serializd_password": {
+                    "type": "string",
+                    "example": "secret"
+                },
+                "tvtime_email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "tvtime_password": {
+                    "type": "string",
+                    "example": "secret"
+                }
+            }
+        },
+        "internal_handler.MigrateInitResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "internal_handler.MigrateProgressResponse": {
+            "type": "object",
+            "properties": {
+                "check_existing": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.CheckExistingStep"
+                },
+                "current_activity": {
+                    "type": "string"
+                },
+                "current_step": {
+                    "type": "integer"
+                },
+                "gather_shows": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.CountStep"
+                },
+                "import_shows": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.ImportStep"
+                },
+                "job_id": {
+                    "type": "string"
+                },
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "queue": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.QueueInfo"
+                },
+                "serializd_login": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.LoginStep"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "summary": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.SummaryStep"
+                },
+                "tvtime_login": {
+                    "$ref": "#/definitions/github_com_alireza_tvtime2serializd_internal_service.LoginStep"
+                }
+            }
+        },
+        "internal_handler.SerializdLoginRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "secret"
+                }
+            }
+        },
+        "internal_handler.SerializdLoginResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "description": "Health and operational endpoints",
+            "name": "system"
+        },
+        {
+            "description": "TV Time login and export",
+            "name": "tvtime"
+        },
+        {
+            "description": "Serializd authentication",
+            "name": "serializd"
+        },
+        {
+            "description": "TV Time to Serializd migration jobs",
+            "name": "migrate"
+        }
+    ]
+}
