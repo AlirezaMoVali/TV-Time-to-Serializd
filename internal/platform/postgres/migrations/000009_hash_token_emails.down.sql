@@ -1,0 +1,1 @@
+-- Irreversible: plaintext emails cannot be restored from hashes.
